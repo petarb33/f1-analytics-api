@@ -1,7 +1,8 @@
 import fastf1
+from fastapi import HTTPException
 from datetime import datetime
 
-SEASONS = list(range(2018, 2026))
+SEASONS = list(range(2018, 2027))
 
 
 def list_seasons() -> list:
@@ -9,6 +10,12 @@ def list_seasons() -> list:
 
 
 def list_races(year: int):
+    if year not in SEASONS:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Invalid year: {year}. Please use a season from {SEASONS}",
+        )
+
     schedule = fastf1.get_event_schedule(year)
     now = datetime.now()
     past = schedule[schedule["Session5DateUtc"] <= now]
@@ -18,11 +25,22 @@ def list_races(year: int):
 
 
 def list_sessions(year: int, round_number: int) -> list:
-    schedule = fastf1.get_event_schedule(year)
-    matches = schedule[schedule["RoundNumber"] == round_number]
+    if year not in SEASONS:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Invalid year: {year}. Please use a season from {SEASONS}",
+        )
 
-    if matches.empty:
-        return []
+    schedule = fastf1.get_event_schedule(year)
+    last_round = int(schedule.iloc[-1]["RoundNumber"])
+
+    if round_number > last_round or round_number < 1:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Round {round_number} does not exist for {year}. Valid range: 1-{last_round}.",
+        )
+
+    matches = schedule[schedule["RoundNumber"] == round_number]
 
     event = matches.iloc[0]
     now = datetime.now()

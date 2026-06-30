@@ -26,8 +26,8 @@ def season(year: int):
 
 @router.get("/seasons/{year}/{round_number}/sessions")
 def get_completed_sessions(year: int, round_number: int):
+    sessions = list_sessions(year, round_number)
+
     return {
-        f"Sessions for {get_event_name_for_round_number(year, round_number)}": list_sessions(
-            year, round_number
-        )
+        f"Sessions for {get_event_name_for_round_number(year, round_number)}": sessions
     }
