@@ -8,6 +8,7 @@ dependencies = [
     "datetime>=6.0",
     "fastapi>=0.138.2",
     "fastf1>=3.8.3",
+    "ipykernel>=7.3.0",
     "uvicorn>=0.49.0",
 ]
 

@@ -1,5 +1,10 @@
 from fastapi import APIRouter
-from app.services.fetch import list_seasons, list_races
+from app.services.fetch import (
+    list_seasons,
+    list_races,
+    list_sessions,
+    get_event_name_for_round_number,
+)
 
 router = APIRouter()
 
@@ -17,3 +22,12 @@ def seasons():
 @router.get("/seasons/{year}/races")
 def season(year: int):
     return {f"races for season {year}": list_races(year)}
+
+
+@router.get("/seasons/{year}/{round_number}/sessions")
+def get_completed_sessions(year: int, round_number: int):
+    return {
+        f"Sessions for {get_event_name_for_round_number(year, round_number)}": list_sessions(
+            year, round_number
+        )
+    }
