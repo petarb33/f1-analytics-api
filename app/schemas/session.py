@@ -12,7 +12,7 @@ class SeasonParams(BaseModel):
     def validate_year(cls, value):
         if value not in SEASONS:
             raise HTTPException(
-                status_code=422, detail=f"season must be one of {SEASONS}"
+                status_code=404, detail=f"season must be one of {SEASONS}"
             )
         return value
 
