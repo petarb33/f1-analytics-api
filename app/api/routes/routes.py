@@ -10,11 +10,6 @@ from app.schemas.session import SeasonParams, SeasonRoundParams
 router = APIRouter()
 
 
-@router.get("/")
-def root():
-    return {"message": "Hello World"}
-
-
 @router.get("/seasons")
 def seasons():
     return {"seasons": list_seasons()}
