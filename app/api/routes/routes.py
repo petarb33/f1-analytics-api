@@ -1,10 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from app.services.fetch import (
     list_seasons,
     list_races,
     list_sessions,
     get_event_name_for_round_number,
 )
+from app.schemas.session import SeasonParams, SeasonRoundParams
 
 router = APIRouter()
 
@@ -20,14 +21,14 @@ def seasons():
 
 
 @router.get("/seasons/{year}/races")
-def season(year: int):
-    return {f"races for season {year}": list_races(year)}
+def season(params: SeasonParams = Depends()):
+    return {f"races for season {params.year}": list_races(params.year)}
 
 
 @router.get("/seasons/{year}/{round_number}/sessions")
-def get_completed_sessions(year: int, round_number: int):
-    sessions = list_sessions(year, round_number)
+def get_completed_sessions(params: SeasonRoundParams = Depends()):
+    sessions = list_sessions(params.year, params.round_number)
 
     return {
-        f"Sessions for {get_event_name_for_round_number(year, round_number)}": sessions
+        f"Sessions for {get_event_name_for_round_number(params.year, params.round_number)}": sessions
     }
