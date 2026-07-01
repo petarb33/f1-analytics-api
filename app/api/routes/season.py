@@ -10,17 +10,17 @@ from app.schemas.session import SeasonParams, SeasonRoundParams
 router = APIRouter()
 
 
-@router.get("/seasons")
+@router.get("")
 def seasons():
     return {"seasons": list_seasons()}
 
 
-@router.get("/seasons/{year}/races")
+@router.get("/{year}/races")
 def season(params: SeasonParams = Depends()):
     return {f"races for season {params.year}": list_races(params.year)}
 
 
-@router.get("/seasons/{year}/{round_number}/sessions")
+@router.get("/{year}/{round_number}/sessions")
 def get_completed_sessions(params: SeasonRoundParams = Depends()):
     sessions = list_sessions(params.year, params.round_number)
 
