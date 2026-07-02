@@ -49,3 +49,7 @@ def load_session(params):
     session.load()
 
     return session
+
+
+def get_drivers(data) -> list[str]:
+    return list(data.results["Abbreviation"])
