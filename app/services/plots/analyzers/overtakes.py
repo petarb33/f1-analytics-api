@@ -21,7 +21,7 @@ class Overtakes(BaseAnalysis):
         fig, ax = plt.subplots()
         drivers = get_drivers(self.data)
         styles = get_drivers_style(self.data, drivers)
-        plot_overtakes(self.data, ax, styles, drivers)
+        self._plot_overtakes(ax, self.data, drivers, styles)
         remove_spines(ax)
         color_fig(fig)
         color_axes(ax)
@@ -31,23 +31,22 @@ class Overtakes(BaseAnalysis):
         add_signature(fig)
         save_image(fig, "test1")
 
+    def _plot_overtakes(self, ax, data, drivers, styles):
+        for driver in drivers:
+            driver_laps = data.laps.pick_drivers(driver)
 
-def plot_overtakes(data, ax, styles, drivers):
-    for driver in drivers:
-        driver_laps = data.laps.pick_drivers(driver)
+            if driver_laps.empty:
+                continue
 
-        if driver_laps.empty:
-            continue
+            abb = driver_laps["Driver"].iloc[0]
 
-        abb = driver_laps["Driver"].iloc[0]
+            sns.lineplot(
+                data=driver_laps,
+                x="LapNumber",
+                y="Position",
+                label=abb,
+                ax=ax,
+                **styles[driver],
+            )
 
-        sns.lineplot(
-            data=driver_laps,
-            x="LapNumber",
-            y="Position",
-            label=abb,
-            ax=ax,
-            **styles[driver],
-        )
-
-    ax.invert_yaxis()
+        ax.invert_yaxis()
