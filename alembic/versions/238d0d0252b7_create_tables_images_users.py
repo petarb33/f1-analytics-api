@@ -1,4 +1,4 @@
-"""create tables images, users
+"""create images table
 
 Revision ID: 238d0d0252b7
 Revises: 2f66e83acc71
@@ -30,20 +30,8 @@ def upgrade() -> None:
         sa.Column("created_at", sa.DateTime(), nullable=True),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_table(
-        "users",
-        sa.Column("id", sa.Integer(), nullable=False),
-        sa.Column("email", sa.String(), nullable=False),
-        sa.Column("hashed_password", sa.String(), nullable=False),
-        sa.PrimaryKeyConstraint("id"),
-    )
-    op.create_index(op.f("ix_users_email"), "users", ["email"], unique=True)
-    op.create_index(op.f("ix_users_id"), "users", ["id"], unique=False)
 
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.drop_index(op.f("ix_users_id"), table_name="users")
-    op.drop_index(op.f("ix_users_email"), table_name="users")
-    op.drop_table("users")
     op.drop_table("images")
