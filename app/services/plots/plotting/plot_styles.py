@@ -1,5 +1,6 @@
 from matplotlib.figure import Figure
 from matplotlib.axes import Axes
+from collections.abc import Iterable
 import pandas as pd
 import numpy as np
 
@@ -40,18 +41,16 @@ def color_fig(fig: Figure) -> None:
     fig.patch.set_facecolor("#292625")
 
 
-def color_axes(axs: list[Axes]) -> None:
-    if not isinstance(axs, (list, np.ndarray)):
-        axs = [axs]
+def remove_spines(axs: Axes | list[Axes] | np.ndarray) -> None:
+    for ax in _iter_axes(axs):
+        for side in ("bottom", "top", "left", "right"):
+            ax.spines[side].set_visible(False)
 
-    for ax in axs:
+
+def color_axes(axs: Axes | list[Axes] | np.ndarray) -> None:
+    for ax in _iter_axes(axs):
         ax.set_facecolor("#1e1c1b")
 
 
-def remove_spines(axs: list[Axes]) -> None:
-    if not isinstance(axs, (list, np.ndarray)):
-        axs = [axs]
-
-    for ax in axs:
-        for side in ["bottom", "top", "left", "right"]:
-            ax.spines[side].set_visible(False)
+def _iter_axes(axs: Axes | list[Axes] | np.ndarray) -> Iterable[Axes]:
+    return np.atleast_1d(axs).ravel()

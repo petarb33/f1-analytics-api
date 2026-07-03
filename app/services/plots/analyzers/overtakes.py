@@ -29,7 +29,7 @@ class Overtakes(BaseAnalysis):
         set_xlabel(ax, label="Lap Number")
         color_ticks(ax)
         add_signature(fig)
-        save_image(fig, "test1")
+        save_image(fig, "test_2")
 
     def _plot_overtakes(self, ax, data, drivers, styles):
         for driver in drivers:
