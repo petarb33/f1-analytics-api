@@ -24,6 +24,10 @@ def set_ylabel(ax: Axes, label="", color="white") -> None:
     ax.set_ylabel(label, color=color)
 
 
+def set_yticks(ax: Axes, ticks):
+    ax.set_yticks(ticks)
+
+
 def color_ticks(ax: Axes, color="white") -> None:
     ax.tick_params(color=color, axis="both", labelcolor=color)
 

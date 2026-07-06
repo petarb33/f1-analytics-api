@@ -9,6 +9,7 @@ from app.services.plots.plotting.plot_styles import (
     color_ticks,
     color_axes,
     color_fig,
+    set_yticks,
 )
 from app.services.plots.plotting.f1_colors import get_drivers_style
 from app.services.plots.core.base import BaseAnalysis
@@ -27,9 +28,10 @@ class Overtakes(BaseAnalysis):
         color_axes(ax)
         set_ylabel(ax)
         set_xlabel(ax, label="Lap Number")
+        set_yticks(ax, list(range(1, len(drivers) - 1)))
         color_ticks(ax)
         add_signature(fig)
-        save_image(fig, "test_2")
+        save_image(fig, "test_3")
 
     def _plot_overtakes(self, ax, data, drivers, styles):
         for driver in drivers:
