@@ -34,4 +34,4 @@ class BaseAnalysis(ABC):
     def run(self):
         self.load()
         self.process()
-        self.plot()
+        return self.plot()

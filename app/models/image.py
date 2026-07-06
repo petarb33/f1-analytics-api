@@ -31,7 +31,7 @@ def save_image(fig: plt.Figure, plot_name: str):
         )
         session.add(img)
         session.commit()
-        return img.id
+        return img.id, image_data
 
 
 def get_image(id: int):
