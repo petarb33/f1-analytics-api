@@ -17,11 +17,11 @@ def add_signature(fig: Figure, x: float = 0.9, y: float = 0.05) -> None:
 
 
 def set_xlabel(ax: Axes, label="", color="white") -> None:
-    ax.set_xlabel(label, color=color)
+    ax.set_xlabel(label, color=color, labelpad=5)
 
 
 def set_ylabel(ax: Axes, label="", color="white") -> None:
-    ax.set_ylabel(label, color=color)
+    ax.set_ylabel(label, color=color, labelpad=5)
 
 
 def set_yticks(ax: Axes, ticks):
