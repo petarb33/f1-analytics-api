@@ -51,6 +51,19 @@ def remove_spines(axs: Axes | list[Axes] | np.ndarray) -> None:
             ax.spines[side].set_visible(False)
 
 
+def add_figure_title(fig: Figure, event_info: dict[str, str | int]) -> None:
+    fig.suptitle(
+        f'Round {event_info['round_number']} - '
+        f'{event_info['grand_prix']} {event_info['year']}\n',
+        color="white",
+        y=0.96,
+    )
+
+
+def add_ax_title(ax: Axes, title: str) -> None:
+    ax.set_title(title, color="white")
+
+
 def color_axes(axs: Axes | list[Axes] | np.ndarray) -> None:
     for ax in _iter_axes(axs):
         ax.set_facecolor("#1e1c1b")
