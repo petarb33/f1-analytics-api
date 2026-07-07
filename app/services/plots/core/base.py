@@ -34,7 +34,7 @@ class BaseAnalysis(ABC):
 
     @property
     def cache_key(self) -> str:
-        return f"{self.year}_{self.round_number}_{self.session}_{type(self).__name__.lower()}"
+        return f"{self.year}_R{self.round_number}_{self.session}_{type(self).__name__.lower()}"
 
     def run(self):
         cached = get_image(self.cache_key)
