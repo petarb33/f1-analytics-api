@@ -1,4 +1,5 @@
 from abc import ABC
+from app.models.image import get_image
 import fastf1
 
 
@@ -31,7 +32,15 @@ class BaseAnalysis(ABC):
     def plot(self):
         pass
 
+    @property
+    def cache_key(self) -> str:
+        return f"{self.year}_{self.round_number}_{self.session}_{type(self).__name__.lower()}"
+
     def run(self):
+        cached = get_image(self.cache_key)
+        if cached:
+            return cached["data"]
+
         self.load()
         self.process()
         return self.plot()

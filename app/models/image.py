@@ -34,11 +34,12 @@ def save_image(fig: plt.Figure, plot_name: str):
         return img.id, image_data
 
 
-def get_image(id: int):
+def get_image(filename: str):
     with Session(engine) as session:
-        img = session.get(Image, id)
+        img = session.query(Image).filter(Image.filename == filename).first()
         if img:
             return {
+                "id": img.id,
                 "filename": img.filename,
                 "mime_type": img.mime_type,
                 "data": img.data,
