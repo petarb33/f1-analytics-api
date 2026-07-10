@@ -45,7 +45,7 @@ class SeasonRoundParams(SeasonParams):
         return value
 
 
-class SessionQueryParameters(SeasonRoundParams):
+class SessionParameters(SeasonRoundParams):
     session: str
 
     @field_validator("session")
