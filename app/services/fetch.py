@@ -53,3 +53,7 @@ def load_session(params):
 
 def get_drivers(data) -> list[str]:
     return list(data.results["Abbreviation"])
+
+
+def get_teams(data) -> list[str]:
+    return list(data.results["TeamName"].unique())
