@@ -9,3 +9,5 @@ SESSIONS_MAPPING = {
     "Qualifying": "Q",
     "Race": "R",
 }
+
+SESSIONS_MAPPING_REVERSED = {v: k for k, v in SESSIONS_MAPPING.items()}
