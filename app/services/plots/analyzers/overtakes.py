@@ -31,7 +31,7 @@ class Overtakes(BaseAnalysis):
         color_axes(ax)
         set_ylabel(ax, label="Position")
         set_xlabel(ax, label="Lap Number")
-        set_yticks(ax, list(range(1, len(drivers) - 1)))
+        set_yticks(ax, list(range(1, len(drivers) + 1)))
         color_ticks(ax)
         add_signature(fig, y=0.005)
         self._adjust_legend(ax)
