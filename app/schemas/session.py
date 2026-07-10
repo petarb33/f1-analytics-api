@@ -1,7 +1,18 @@
-from fastapi import HTTPException
+from anyio.functools import lru_cache
 from pydantic import BaseModel, field_validator, ValidationInfo
 from app.services.constants import SEASONS, SESSIONS_MAPPING
 from app.services.fetch import list_races, list_sessions
+
+
+@lru_cache(maxsize=128)
+def get_race_count(year: int) -> int:
+    return len(list_races(year))
+
+
+@lru_cache(maxsize=512)
+def get_valid_sessions(year: int, round_number: int) -> tuple[str, ...]:
+    past_sessions = list_sessions(year, round_number)
+    return tuple(SESSIONS_MAPPING[s] for s in past_sessions if s in SESSIONS_MAPPING)
 
 
 class SeasonParams(BaseModel):
@@ -9,11 +20,9 @@ class SeasonParams(BaseModel):
 
     @field_validator("year")
     @classmethod
-    def validate_year(cls, value):
+    def validate_year(cls, value: int) -> int:
         if value not in SEASONS:
-            raise HTTPException(
-                status_code=404, detail=f"season must be one of {SEASONS}"
-            )
+            raise ValueError(f"year must be one of {sorted(SEASONS)}")
         return value
 
 
@@ -22,20 +31,17 @@ class SeasonRoundParams(SeasonParams):
 
     @field_validator("round_number")
     @classmethod
-    def validate_round_number(cls, value, info: ValidationInfo):
+    def validate_round_number(cls, value: int, info: ValidationInfo):
         year = info.data.get("year")
         if year is None:
             return value
 
-        races = list_races(year)
-        last_round = len(races)
-
-        if value > last_round or value < 1:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Round {value} does not exist for {year}. Valid range: 1-{last_round}.",
+        last_round = get_race_count(year)
+        if not 1 <= value <= last_round:
+            raise ValueError(
+                f"Round {value} does not exist for {year}. "
+                f"Valid range: 1-{last_round}."
             )
-
         return value
 
 
@@ -45,16 +51,15 @@ class SessionQueryParameters(SeasonRoundParams):
     @field_validator("session")
     @classmethod
     def validate_session(cls, value, info: ValidationInfo):
-        round_number = info.data.get("round_number")
         year = info.data.get("year")
+        round_number = info.data.get("round_number")
+        if year is None or round_number is None:  # earlier field failed; skip
+            return value
 
-        past_sessions = list_sessions(year, round_number)
-        sessions = [SESSIONS_MAPPING[s] for s in past_sessions if s in SESSIONS_MAPPING]
-
-        if value not in sessions:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Session {value} does not exist for round number {round_number} in {year}.",
+        valid = get_valid_sessions(year, round_number)
+        if value not in valid:
+            raise ValueError(
+                f"Session '{value}' does not exist for round {round_number} "
+                f"in {year}. Valid sessions: {list(valid)}."
             )
-
         return value
