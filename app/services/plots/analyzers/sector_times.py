@@ -112,5 +112,6 @@ class TeamSectorTimes(SectorTimes):
     def colors(self) -> dict[str, str]:
         return self._colors
 
+    @property
     def group_by(self) -> str:
         return "Team"
