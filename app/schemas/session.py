@@ -53,7 +53,7 @@ class SessionParameters(SeasonRoundParams):
     def validate_session(cls, value, info: ValidationInfo):
         year = info.data.get("year")
         round_number = info.data.get("round_number")
-        if year is None or round_number is None:  # earlier field failed; skip
+        if year is None or round_number is None:
             return value
 
         valid = get_valid_sessions(year, round_number)
