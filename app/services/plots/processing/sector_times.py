@@ -11,7 +11,7 @@ def get_sector_times(data: Session, entities: list[str], group_by: str) -> pd.Da
             rows.append(
                 {
                     "entity": entity,
-                    "sector": sector,
+                    "sector": sector.replace("Time", "").replace("Sector", "Sector "),
                     "time": time.total_seconds(),
                 }
             )
