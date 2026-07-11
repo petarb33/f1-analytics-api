@@ -18,7 +18,7 @@ class Image(Base):
 
 def save_image(fig: plt.Figure, plot_name: str):
     buffer = BytesIO()
-    fig.savefig(buffer, format="png", bbox_inches="tight")
+    fig.savefig(buffer, format="png", bbox_inches="tight", dpi=300)
     buffer.seek(0)
     image_data = buffer.read()
     buffer.close()
