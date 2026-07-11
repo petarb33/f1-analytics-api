@@ -74,7 +74,7 @@ class SectorTimes(BaseAnalysis):
             add_ax_title(ax, title=sector)
 
         add_signature(fig)
-        add_figure_title(fig, self.event_info)
+        add_figure_title(fig, self.event_info, "Fastest Sectors Comparison", 0.95)
         _, image_bytes = save_image(fig, self.cache_key)
         return image_bytes
 
