@@ -75,5 +75,11 @@ def color_axes(axs: Axes | list[Axes] | np.ndarray) -> None:
         ax.set_facecolor("#1e1c1b")
 
 
+def set_grid_lines(axs: Axes | list[Axes] | np.ndarray) -> None:
+    for ax in _iter_axes(axs):
+        ax.grid(visible=True, which="major", axis="y", ls="--", alpha=0.5)
+        ax.set_axisbelow(True)
+
+
 def _iter_axes(axs: Axes | list[Axes] | np.ndarray) -> Iterable[Axes]:
     return np.atleast_1d(axs).ravel()

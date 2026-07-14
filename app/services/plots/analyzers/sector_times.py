@@ -16,6 +16,7 @@ from app.services.plots.plotting.plot_styles import (
     add_ax_title,
     add_figure_title,
     set_ylim,
+    set_grid_lines,
 )
 from app.services.plots.plotting.f1_colors import get_drivers_colors, get_teams_colors
 from app.models.image import save_image
@@ -73,6 +74,7 @@ class SectorTimes(BaseAnalysis):
             set_ylabel(ax, label="Time (s)")
             add_ax_title(ax, title=sector)
 
+        set_grid_lines(axs)
         add_signature(fig)
         add_figure_title(fig, self.event_info, "Fastest Sectors Comparison", 0.95)
         _, image_bytes = save_image(fig, self.cache_key)
