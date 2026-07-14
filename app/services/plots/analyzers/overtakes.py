@@ -37,7 +37,7 @@ class Overtakes(BaseAnalysis):
         self._adjust_legend(ax)
         add_figure_title(fig, self.event_info)
         add_ax_title(ax, "Overtakes")
-        _, image_bytes = save_image(fig, f"{self.cache_key}")
+        _, image_bytes = save_image(fig, self.cache_key)
         return image_bytes
 
     def _plot_overtakes(self, ax, data, drivers, styles):
