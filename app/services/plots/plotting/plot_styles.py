@@ -57,13 +57,13 @@ def add_figure_title(
     desc: str | None = None,
     y: float | None = 0.96,
 ) -> None:
-    fig.suptitle(
+    title = (
         f'Round {event_info['round_number']} - '
         f'{event_info['grand_prix']} {event_info['year']}\n'
-        f'{desc}',
-        color="white",
-        y=y,
     )
+    if desc:
+        title += f"{desc}"
+    fig.suptitle(title, color="white", y=y)
 
 
 def add_ax_title(ax: Axes, title: str) -> None:
