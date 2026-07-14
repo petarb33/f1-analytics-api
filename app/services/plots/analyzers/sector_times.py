@@ -69,11 +69,11 @@ class SectorTimes(BaseAnalysis):
                 ax.bar_label(container, fontsize=7, color="white")
 
             set_ylim(group, ax, "time")
-            color_ticks(ax)
-            set_xlabel(ax)
-            set_ylabel(ax, label="Time (s)")
             add_ax_title(ax, title=sector)
 
+        color_ticks(ax)
+        set_xlabel(ax)
+        set_ylabel(ax, label="Time (s)")
         set_grid_lines(axs)
         add_signature(fig)
         add_figure_title(fig, self.event_info, "Fastest Sectors Comparison", 0.95)
