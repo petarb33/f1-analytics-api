@@ -1,15 +1,12 @@
-from anyio.functools import lru_cache
 from pydantic import BaseModel, field_validator, ValidationInfo
 from app.services.constants import SEASONS, SESSIONS_MAPPING
 from app.services.fetch import list_races, list_sessions
 
 
-@lru_cache(maxsize=128)
 def get_race_count(year: int) -> int:
     return len(list_races(year))
 
 
-@lru_cache(maxsize=512)
 def get_valid_sessions(year: int, round_number: int) -> tuple[str, ...]:
     past_sessions = list_sessions(year, round_number)
     return tuple(SESSIONS_MAPPING[s] for s in past_sessions if s in SESSIONS_MAPPING)
