@@ -1,4 +1,4 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from app.models.image import get_image
 import fastf1
 
@@ -29,6 +29,7 @@ class BaseAnalysis(ABC):
     def process(self):
         pass
 
+    @abstractmethod
     def plot(self):
         pass
 
