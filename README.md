@@ -1,4 +1,15 @@
-# f1-analytics-api
+# f1-analytics-api :checkered_flag:
+[![Python](https://img.shields.io/badge/python-3.12+-blue)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat&logo=FastAPI&labelColor=555&logoColor=white)](https://fastapi.tiangolo.com/)
+![RestAPI](https://img.shields.io/badge/API-REST-violet)
+[![FastF1](https://img.shields.io/badge/FastF1-api-red)](https://docs.fastf1.dev/)
+[![Pandas](https://img.shields.io/badge/Pandas-150458?logo=pandas&logoColor=white)](https://pandas.pydata.org/)
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-11557c?logo=python&logoColor=white)](https://matplotlib.org/)
+[![Seaborn](https://img.shields.io/badge/Seaborn-4c72b0?logoColor=white)](https://seaborn.pydata.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+
+
+---
 
 A REST API for exploring Formula 1 seasons and sessions, and generating cached, styled race analysis charts — powered by [FastF1](https://docs.fastf1.dev/).
 
@@ -7,7 +18,7 @@ A REST API for exploring Formula 1 seasons and sessions, and generating cached, 
 `f1-analytics-api` wraps the [FastF1](https://docs.fastf1.dev/) telemetry library behind a REST API. It lets clients:
 
 - Browse seasons, completed races, and completed sessions.
-- Generate styled visualizations from real session data (currently: driver position/overtakes over a race, and fastest sector time comparisons by driver or team).
+- Generate styled visualizations from real session data (currently: driver position/overtakes over a race, and fastest sector time comparisons by driver or team.)
 - Register and log in via JWT-based authentication.
 
 Generated charts are rendered server-side (matplotlib/seaborn, dark themed, using official F1 driver/team colors) and cached in PostgreSQL, keyed by season/round/session/analysis type, so repeat requests skip recomputation instead of reloading and reprocessing telemetry every time.
@@ -18,11 +29,11 @@ Generated charts are rendered server-side (matplotlib/seaborn, dark themed, usin
 | ---------------- | ------------------------------------------------------------------ |
 | Web framework    | [FastAPI](https://fastapi.tiangolo.com/)                           |
 | F1 data source   | [FastF1](https://docs.fastf1.dev/)                                 |
-| Database         | PostgreSQL                                                         |
+| Database         | [PostgreSQL](https://www.postgresql.org/)                                                         |
 | ORM / migrations | [SQLAlchemy](https://www.sqlalchemy.org/) + [Alembic](https://alembic.sqlalchemy.org/) |
 | Auth             | [python-jose](https://github.com/mpdavis/python-jose) (JWT) + [passlib](https://passlib.readthedocs.io/)/bcrypt |
 | Validation       | [Pydantic](https://docs.pydantic.dev/) / pydantic-settings          |
-| Charting         | matplotlib, seaborn                                                |
+| Charting         | [matplotlib](https://matplotlib.org/), [seaborn](https://seaborn.pydata.org/)                                                |
 | Dependency mgmt  | [uv](https://docs.astral.sh/uv/)                                    |
 
 ## 3. Project Structure
