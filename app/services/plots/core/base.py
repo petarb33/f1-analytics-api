@@ -8,11 +8,11 @@ class BaseAnalysis(ABC):
         self.session = session
         self.year = year
         self.round_number = round_number
+        self.event = fastf1.get_event(self.year, self.round_number)
 
     def load(self):
         self.data = fastf1.get_session(self.year, self.round_number, self.session)
         self.data.load()
-        self.event = fastf1.get_event(self.year, self.round_number)
         self.event_info = self.get_event_info()
 
     def get_event_info(self):
@@ -35,7 +35,8 @@ class BaseAnalysis(ABC):
 
     @property
     def cache_key(self) -> str:
-        return f"{self.year}_R{self.round_number}_{self.session}_{type(self).__name__.lower()}"
+        country = self.event["Country"]
+        return f"{self.year}_R{self.round_number}_{country}_{self.session}_{type(self).__name__.lower()}"
 
     def run(self):
         cached = get_image(self.cache_key)
