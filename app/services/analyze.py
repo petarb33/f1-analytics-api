@@ -16,5 +16,7 @@ def run_sector_analysis(
     year: int, round_number: int, session: str, group: str, display: str
 ):
     analyzer_class = SECTOR_ANALYZERS[group]
-    analyzer = analyzer_class(year=year, round_number=round_number, session=session)
+    analyzer = analyzer_class(
+        year=year, round_number=round_number, session=session, display=display
+    )
     return analyzer.run()

@@ -24,6 +24,12 @@ from app.services.plots.processing.sector_times import get_sector_times
 
 
 class SectorTimes(BaseAnalysis):
+    def __init__(
+        self, year: int, round_number: int, session: str, display: str = "absolute"
+    ):
+        super().__init__(year, round_number, session)
+        self.display = display
+
     @property
     @abstractmethod
     def entities(self) -> list[str]:
@@ -42,8 +48,14 @@ class SectorTimes(BaseAnalysis):
         """FastF1 laps column to filter on: 'Driver' or 'Team'."""
         pass
 
+    @property
+    def cache_key(self) -> str:
+        return f"{super().cache_key}_{self.display}"
+
     def process(self):
-        self.sector_times = get_sector_times(self.data, self.entities, self.group_by)
+        self.sector_times = get_sector_times(
+            self.data, self.entities, self.group_by, self.display
+        )
 
     def plot(self):
         fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10, 10))
@@ -70,10 +82,10 @@ class SectorTimes(BaseAnalysis):
 
             set_ylim(group, ax, "time")
             add_ax_title(ax, title=sector)
+            color_ticks(ax)
+            set_xlabel(ax)
+            set_ylabel(ax, label="Time (s)")
 
-        color_ticks(ax)
-        set_xlabel(ax)
-        set_ylabel(ax, label="Time (s)")
         set_grid_lines(axs)
         add_signature(fig)
         add_figure_title(fig, self.event_info, "Fastest Sectors Comparison", 0.95)

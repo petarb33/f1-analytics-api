@@ -2,7 +2,9 @@ from fastf1.core import Session
 import pandas as pd
 
 
-def get_sector_times(data: Session, entities: list[str], group_by: str) -> pd.DataFrame:
+def get_sector_times(
+    data: Session, entities: list[str], group_by: str, display: str
+) -> pd.DataFrame:
     rows = []
     for sector in ["Sector1Time", "Sector2Time", "Sector3Time"]:
         for entity in entities:
@@ -17,5 +19,9 @@ def get_sector_times(data: Session, entities: list[str], group_by: str) -> pd.Da
             )
 
     df = pd.DataFrame(rows)
+
+    if display == "delta":
+        df["time"] = df.groupby("sector")["time"].transform(lambda x: x - x.min())
+
     df = df.sort_values("time").reset_index(drop=True)
     return df
