@@ -21,14 +21,21 @@ from app.services.plots.plotting.plot_styles import (
 from app.services.plots.plotting.f1_colors import get_drivers_colors, get_teams_colors
 from app.models.image import save_image
 from app.services.plots.processing.sector_times import get_sector_times
+from app.services.plots.processing.sector_times import get_fastest_lap_sector_times
 
 
 class SectorTimes(BaseAnalysis):
     def __init__(
-        self, year: int, round_number: int, session: str, display: str = "absolute"
+        self,
+        year: int,
+        round_number: int,
+        session: str,
+        display: str = "absolute",
+        basis: str = "theoretical",
     ):
         super().__init__(year, round_number, session)
         self.display = display
+        self.basis = basis
 
     @property
     @abstractmethod
@@ -50,12 +57,17 @@ class SectorTimes(BaseAnalysis):
 
     @property
     def cache_key(self) -> str:
-        return f"{super().cache_key}_{self.display}"
+        return f"{super().cache_key}_{self.display}_{self.basis}"
 
     def process(self):
-        self.sector_times = get_sector_times(
-            self.data, self.entities, self.group_by, self.display
-        )
+        if self.basis == "theoretical":
+            self.sector_times = get_sector_times(
+                self.data, self.entities, self.group_by, self.display
+            )
+        else:
+            self.sector_times = get_fastest_lap_sector_times(
+                self.data, self.entities, self.group_by, self.display
+            )
 
     def plot(self):
         fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10, 10))
@@ -88,7 +100,13 @@ class SectorTimes(BaseAnalysis):
 
         set_grid_lines(axs)
         add_signature(fig)
-        add_figure_title(fig, self.event_info, "Fastest Sectors Comparison", 0.95)
+        title = (
+            "Fastest Lap Sector Times"
+            if self.basis == "fastest_lap"
+            else "Fastest Sectors Comparison"
+        )
+        add_figure_title(fig, self.event_info, title, 0.95)
+        # add_figure_title(fig, self.event_info, "Fastest Sectors Comparison", 0.95)
         _, image_bytes = save_image(fig, self.cache_key)
         return image_bytes
 

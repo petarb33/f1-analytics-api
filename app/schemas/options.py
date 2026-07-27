@@ -8,3 +8,7 @@ class GroupOptions(BaseModel):
 
 class DisplayOptions(BaseModel):
     display: Literal["absolute", "delta"] = "absolute"
+
+
+class BasisOptions(BaseModel):
+    basis: Literal["theoretical", "fastest_lap"] = "theoretical"

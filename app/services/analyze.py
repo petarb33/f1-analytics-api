@@ -13,10 +13,14 @@ def run_overtakes(year: int, round_number: int, session: str):
 
 
 def run_sector_analysis(
-    year: int, round_number: int, session: str, group: str, display: str
+    year: int, round_number: int, session: str, group: str, display: str, basis: str
 ):
     analyzer_class = SECTOR_ANALYZERS[group]
     analyzer = analyzer_class(
-        year=year, round_number=round_number, session=session, display=display
+        year=year,
+        round_number=round_number,
+        session=session,
+        display=display,
+        basis=basis,
     )
     return analyzer.run()

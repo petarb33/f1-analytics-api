@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Response
 from app.schemas.session import SessionParameters
 from app.services.analyze import run_overtakes
-from app.schemas.options import GroupOptions, DisplayOptions
+from app.schemas.options import GroupOptions, DisplayOptions, BasisOptions
 from app.services.analyze import run_sector_analysis
 
 router = APIRouter()
@@ -18,6 +18,7 @@ def get_sectors_graph(
     params: SessionParameters = Depends(),
     group_options: GroupOptions = Depends(),
     display_options: DisplayOptions = Depends(),
+    basis_options: BasisOptions = Depends(),
 ):
     image_bytes = run_sector_analysis(
         params.year,
@@ -25,5 +26,6 @@ def get_sectors_graph(
         params.session,
         group_options.group,
         display_options.display,
+        basis_options.basis,
     )
     return Response(content=image_bytes, media_type="image/png")
