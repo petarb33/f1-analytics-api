@@ -1,5 +1,6 @@
 from app.services.plots.analyzers.overtakes import Overtakes
 from app.services.plots.analyzers.sector_times import DriverSectorTimes, TeamSectorTimes
+from app.services.plots.analyzers.strategy import Strategy
 
 SECTOR_ANALYZERS = {
     "drivers": DriverSectorTimes,
@@ -24,3 +25,9 @@ def run_sector_analysis(
         basis=basis,
     )
     return analyzer.run()
+
+
+def run_strategy(year: int, round_number: int, session: str):
+    strategy = Strategy(year=year, round_number=round_number, session=session)
+
+    return strategy.run()
