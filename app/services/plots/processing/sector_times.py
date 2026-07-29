@@ -9,12 +9,18 @@ def get_sector_times(
     for sector in ["Sector1Time", "Sector2Time", "Sector3Time"]:
         for entity in entities:
             laps = data.laps.loc[data.laps[group_by] == entity]
+            sector_times = laps[sector].dropna()
+            if sector_times.empty:
+                continue
+
             time = laps[sector].min()
+            index = laps[sector].idxmin()
             rows.append(
                 {
                     "entity": entity,
                     "sector": sector.replace("Time", "").replace("Sector", "Sector "),
                     "time": time.total_seconds(),
+                    "tyre": laps.loc[index]["Compound"],
                 }
             )
 
@@ -35,12 +41,16 @@ def get_fastest_lap_sector_times(
         laps = data.laps.loc[data.laps[group_by] == entity]
         fastest_lap = laps.pick_fastest()
 
+        if fastest_lap is None:
+            continue
+
         for sector in ["Sector1Time", "Sector2Time", "Sector3Time"]:
             rows.append(
                 {
                     "entity": entity,
                     "sector": sector.replace("Time", "").replace("Sector", "Sector "),
                     "time": fastest_lap[sector].total_seconds(),
+                    "tyre": fastest_lap["Compound"],
                 }
             )
 

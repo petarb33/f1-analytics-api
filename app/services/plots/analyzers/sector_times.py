@@ -18,7 +18,11 @@ from app.services.plots.plotting.plot_styles import (
     set_ylim,
     set_grid_lines,
 )
-from app.services.plots.plotting.f1_colors import get_drivers_colors, get_teams_colors
+from app.services.plots.plotting.f1_colors import (
+    get_drivers_colors,
+    get_teams_colors,
+    get_compound_colors,
+)
 from app.models.image import save_image
 from app.services.plots.processing.sector_times import get_sector_times
 from app.services.plots.processing.sector_times import get_fastest_lap_sector_times
@@ -72,9 +76,13 @@ class SectorTimes(BaseAnalysis):
     def plot(self):
         fig, axs = plt.subplots(nrows=3, ncols=1, figsize=(10, 10))
         fig.subplots_adjust(hspace=0.5)
+        compound_colors = get_compound_colors(self.data)
+
         remove_spines(axs)
         color_fig(fig)
         color_axes(axs)
+        set_grid_lines(axs)
+        add_signature(fig)
 
         for ax, (sector, group) in zip(
             axs, self.sector_times.groupby("sector", sort=False)
@@ -92,21 +100,22 @@ class SectorTimes(BaseAnalysis):
             for container in ax.containers:
                 ax.bar_label(container, fontsize=7, color="white")
 
+            for bar, tyre in zip(ax.patches, group["tyre"]):
+                bar.set_edgecolor(compound_colors.get(tyre, "white"))
+                bar.set_linewidth(1)
+
             set_ylim(group, ax, "time")
             add_ax_title(ax, title=sector)
             color_ticks(ax)
             set_xlabel(ax)
             set_ylabel(ax, label="Time (s)")
 
-        set_grid_lines(axs)
-        add_signature(fig)
         title = (
             "Fastest Lap Sector Times"
             if self.basis == "fastest_lap"
             else "Fastest Sectors Comparison"
         )
         add_figure_title(fig, self.event_info, title, 0.95)
-        # add_figure_title(fig, self.event_info, "Fastest Sectors Comparison", 0.95)
         _, image_bytes = save_image(fig, self.cache_key)
         return image_bytes
 
