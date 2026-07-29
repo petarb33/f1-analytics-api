@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Response
-from app.schemas.session import SessionParameters
+from app.schemas.session import SessionParameters, RaceSessionParameters
 from app.schemas.options import GroupOptions, DisplayOptions, BasisOptions
 from app.services.analyze import run_sector_analysis, run_strategy, run_overtakes
 
@@ -7,7 +7,7 @@ router = APIRouter()
 
 
 @router.get("/overtakes")
-def get_overtakes_graph(params: SessionParameters = Depends()):
+def get_overtakes_graph(params: RaceSessionParameters = Depends()):
     image_bytes = run_overtakes(params.year, params.round_number, params.session)
     return Response(content=image_bytes, media_type="image/png")
 
@@ -31,6 +31,6 @@ def get_sectors_graph(
 
 
 @router.get("/strategy")
-def get_strategy_graph(params: SessionParameters = Depends()):
+def get_strategy_graph(params: RaceSessionParameters = Depends()):
     image_bytes = run_strategy(params.year, params.round_number, params.session)
     return Response(content=image_bytes, media_type="image/png")

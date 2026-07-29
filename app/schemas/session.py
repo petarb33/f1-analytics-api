@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator, ValidationInfo
-from app.services.constants import SEASONS, SESSIONS_MAPPING
+from app.services.constants import SEASONS, SESSIONS_MAPPING, RACE_SESSIONS
 from app.services.fetch import list_races, list_sessions
 
 
@@ -58,5 +58,17 @@ class SessionParameters(SeasonRoundParams):
             raise ValueError(
                 f"Session '{value}' does not exist for round {round_number} "
                 f"in {year}. Valid sessions: {list(valid)}."
+            )
+        return value
+
+
+class RaceSessionParameters(SessionParameters):
+    @field_validator("session")
+    @classmethod
+    def validate_race_session(cls, value, info: ValidationInfo):
+        if value not in RACE_SESSIONS:
+            raise ValueError(
+                f"Session '{value}' is not supported here — only Race ('R') "
+                f"and Sprint ('S') sessions are allowed."
             )
         return value
