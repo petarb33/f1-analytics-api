@@ -14,3 +14,5 @@ SESSIONS_MAPPING = {
 SESSIONS_MAPPING_REVERSED = {v: k for k, v in SESSIONS_MAPPING.items()}
 
 RACE_SESSIONS = ("R", "S")
+
+CONDITION_COLORS = {"VSC": "tan", "SC": "sienna", "RF": "red"}
