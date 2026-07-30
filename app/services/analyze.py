@@ -1,10 +1,16 @@
 from app.services.plots.analyzers.overtakes import Overtakes
 from app.services.plots.analyzers.sector_times import DriverSectorTimes, TeamSectorTimes
 from app.services.plots.analyzers.strategy import Strategy
+from app.services.plots.analyzers.race_pace import TeamsRacePace, DriversRacePace
 
 SECTOR_ANALYZERS = {
     "drivers": DriverSectorTimes,
     "teams": TeamSectorTimes,
+}
+
+PACE_ANALYZERS = {
+    "drivers": DriversRacePace,
+    "teams": TeamsRacePace,
 }
 
 
@@ -24,6 +30,12 @@ def run_sector_analysis(
         display=display,
         basis=basis,
     )
+    return analyzer.run()
+
+
+def run_race_pace(year: int, round_number: int, session: str, group: str):
+    analyzer_class = PACE_ANALYZERS[group]
+    analyzer = analyzer_class(year=year, round_number=round_number, session=session)
     return analyzer.run()
 
 
