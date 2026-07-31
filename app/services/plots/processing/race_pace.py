@@ -15,6 +15,7 @@ def get_race_pace_boxplot(
 
     transformed_laps = laps.copy()
     transformed_laps["LapTime (s)"] = transformed_laps["LapTime"].dt.total_seconds()
+    transformed_laps = transformed_laps.loc[transformed_laps["LapNumber"] != 1]
 
     transformed_laps = fill_missing_laps(transformed_laps)
 
