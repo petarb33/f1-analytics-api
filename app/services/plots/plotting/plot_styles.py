@@ -83,3 +83,12 @@ def set_grid_lines(axs: Axes | list[Axes] | np.ndarray) -> None:
 
 def _iter_axes(axs: Axes | list[Axes] | np.ndarray) -> Iterable[Axes]:
     return np.atleast_1d(axs).ravel()
+
+
+def move_legend(ax: Axes, fontsize: int = 11):
+    ax.legend(
+        bbox_to_anchor=(1.025, 1),
+        loc="upper left",
+        borderaxespad=0,
+        fontsize=fontsize,
+    )
