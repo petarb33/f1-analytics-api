@@ -18,10 +18,16 @@ A REST API for exploring Formula 1 seasons and sessions, and generating cached, 
 `f1-analytics-api` wraps the [FastF1](https://docs.fastf1.dev/) telemetry library behind a REST API. It lets clients:
 
 - Browse seasons, completed races, and completed sessions.
-- Generate styled visualizations from real session data (currently: driver position/overtakes over a race, and fastest sector time comparisons by driver or team.)
+- Generate styled visualizations from real session data:
+  - **Overtakes** — driver position over the course of a race.
+  - **Sector times** — fastest sector comparison by driver or team, either the theoretical best (fastest time in each sector independently) or taken from a single fastest lap, shown as absolute times or deltas to the fastest.
+  - **Race pace** — lap time distribution (box plot) by driver or team, with in/out and safety-car-affected laps excluded.
+  - **Strategy** — tyre stint timeline per driver, with Safety Car / Virtual Safety Car / Red Flag periods marked per driver (accounting for track position — a leader and a lapped car aren't necessarily on the same lap number when a stoppage starts).
 - Register and log in via JWT-based authentication.
 
-Generated charts are rendered server-side (matplotlib/seaborn, dark themed, using official F1 driver/team colors) and cached in PostgreSQL, keyed by season/round/session/analysis type, so repeat requests skip recomputation instead of reloading and reprocessing telemetry every time.
+Overtakes, race pace, and strategy are only meaningful for full-distance sessions, so those endpoints are restricted to Race and Sprint sessions; sector comparisons remain available for any completed session.
+
+Generated charts are rendered server-side (matplotlib/seaborn, dark themed, using official F1 driver/team/compound colors) and cached in PostgreSQL, keyed by season/round/session/analysis type/options, so repeat requests skip recomputation instead of reloading and reprocessing telemetry every time.
 
 ## 2. Tech Stack
 
@@ -56,21 +62,26 @@ app/
 │   └── image.py                  # Images table + save/get helpers
 ├── schemas/
 │   ├── user.py                    # auth request/response models
-│   ├── session.py                  # season/round/session validation
-│   └── options.py                   # chart query options (group, display)
+│   ├── session.py                  # season/round/session validation (incl. race-only sessions)
+│   └── options.py                   # chart query options (group, display, basis)
 └── services/
     ├── auth.py                       # user auth logic
     ├── fetch.py                       # FastF1 schedule/session lookups
-    ├── constants.py                    # season range, session name mapping
+    ├── constants.py                    # season range, session mapping, race sessions, track status colors
     ├── analyze.py                       # analysis orchestration
     └── plots/
         ├── core/
         │   └── base.py                    # BaseAnalysis: load/process/plot/cache template
         ├── analyzers/
         │   ├── overtakes.py                # position-by-lap chart
-        │   └── sector_times.py               # fastest sector comparison (driver/team)
+        │   ├── sector_times.py               # fastest sector comparison (driver/team)
+        │   ├── race_pace.py                   # lap time distribution box plot (driver/team)
+        │   └── strategy.py                     # tyre stint timeline + SC/VSC/RF markers
         ├── processing/
-        │   └── sector_times.py                # sector time data shaping
+        │   ├── sector_times.py                # sector time data shaping
+        │   ├── race_pace.py                    # lap time filtering/shaping for box plots
+        │   ├── strategy.py                      # stint length aggregation
+        │   └── track_status.py                   # per-driver SC/VSC/Red Flag lap detection
         └── plotting/
             ├── f1_colors.py                     # driver/team/compound color mappings
             └── plot_styles.py                     # shared dark-theme styling helpers
@@ -143,9 +154,17 @@ curl http://localhost:8000/api/v1/season/2024/5/sessions
 Chart endpoints return raw `image/png` bytes (not JSON) — point a browser or `<img>` tag directly at the URL, or save the response to a file:
 
 ```bash
+# Overtakes (Race/Sprint only)
 curl http://localhost:8000/api/v1/analysis/2024/5/R/overtakes -o overtakes.png
 
-curl "http://localhost:8000/api/v1/analysis/2024/5/R/sectors?group=drivers" -o sectors.png
+# Sector times — any completed session, with options
+curl "http://localhost:8000/api/v1/analysis/2024/5/R/sectors?group=drivers&display=delta&basis=fastest_lap" -o sectors.png
+
+# Race pace box plot (Race/Sprint only)
+curl "http://localhost:8000/api/v1/analysis/2024/5/R/racepace?group=teams" -o racepace.png
+
+# Strategy, with SC/VSC/Red Flag markers (Race/Sprint only)
+curl http://localhost:8000/api/v1/analysis/2024/5/R/strategy -o strategy.png
 ```
 
 ## API Endpoints
@@ -158,7 +177,9 @@ curl "http://localhost:8000/api/v1/analysis/2024/5/R/sectors?group=drivers" -o s
 | GET    | `/api/v1/season`                                                     | List available seasons                                |      |
 | GET    | `/api/v1/season/{year}/races`                                         | List completed races for a season                       |      |
 | GET    | `/api/v1/season/{year}/{round_number}/sessions`                        | List completed sessions for a race round                  |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/overtakes`            | Generate a driver position/overtakes chart (PNG)             |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/sectors?group={drivers\|teams}` | Generate a fastest sector time comparison chart (PNG) |      |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/overtakes`            | Driver position/overtakes chart (PNG) — Race/Sprint only        |      |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/sectors?group={drivers\|teams}&display={absolute\|delta}&basis={theoretical\|fastest_lap}` | Sector time comparison chart (PNG) — any completed session |      |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/racepace?group={drivers\|teams}` | Lap time distribution box plot (PNG) — Race/Sprint only |      |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/strategy`             | Tyre strategy chart with SC/VSC/Red Flag markers (PNG) — Race/Sprint only |      |
 
-> Note: chart generation results are cached in PostgreSQL — the first request for a given season/round/session/analysis combination computes and stores the image; subsequent requests for the same combination are served from the cache.
+> Note: chart generation results are cached in PostgreSQL — the first request for a given season/round/session/analysis/options combination computes and stores the image; subsequent requests for the same combination are served from the cache.
