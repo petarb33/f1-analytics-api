@@ -7,6 +7,7 @@ from app.services.analyze import (
     run_overtakes,
     run_race_pace,
 )
+from app.services.analyze import run_lap_by_lap_pace
 
 router = APIRouter()
 
@@ -48,4 +49,10 @@ def get_race_pace_graph(
 @router.get("/strategy")
 def get_strategy_graph(params: RaceSessionParameters = Depends()):
     image_bytes = run_strategy(params.year, params.round_number, params.session)
+    return Response(content=image_bytes, media_type="image/png")
+
+
+@router.get("/paceByLaps")
+def get_pace_by_laps_graph(params: RaceSessionParameters = Depends()):
+    image_bytes = run_lap_by_lap_pace(params.year, params.round_number, params.session)
     return Response(content=image_bytes, media_type="image/png")
