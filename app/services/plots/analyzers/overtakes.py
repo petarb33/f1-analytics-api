@@ -12,12 +12,12 @@ from app.services.plots.plotting.plot_styles import (
     set_yticks,
     add_ax_title,
     add_figure_title,
+    move_legend,
 )
 from app.services.plots.plotting.f1_colors import get_drivers_style
 from app.services.plots.core.base import BaseAnalysis
 from app.services.fetch import get_drivers
 from app.models.image import save_image
-from matplotlib.axes import Axes
 
 
 class Overtakes(BaseAnalysis):
@@ -34,7 +34,7 @@ class Overtakes(BaseAnalysis):
         set_yticks(ax, list(range(1, len(drivers) + 1)))
         color_ticks(ax)
         add_signature(fig, y=0.005)
-        self._adjust_legend(ax)
+        move_legend(ax)
         add_figure_title(fig, self.event_info)
         add_ax_title(ax, "Overtakes")
         _, image_bytes = save_image(fig, self.cache_key)
@@ -59,11 +59,3 @@ class Overtakes(BaseAnalysis):
             )
 
         ax.invert_yaxis()
-
-    def _adjust_legend(self, ax: Axes):
-        ax.legend(
-            bbox_to_anchor=(1.025, 1),
-            loc="upper left",
-            borderaxespad=0,
-            fontsize=11,
-        )
