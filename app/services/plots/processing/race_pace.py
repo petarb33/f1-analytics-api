@@ -1,6 +1,7 @@
 import pandas as pd
 from fastf1.core import Session
 from pandas import DataFrame
+from app.core.logging import logger
 
 
 def get_race_pace_boxplot(
@@ -47,8 +48,10 @@ def fill_missing_laps(laps: pd.DataFrame) -> pd.DataFrame:
             if all(pd.notna([s1, s2, s3])):
                 laptime = s1.total_seconds() + s2.total_seconds() + s3.total_seconds()
                 laps.at[index, "LapTime (s)"] = laptime
-                print(
-                    f"At Lap {lap['LapNumber']} for {lap['Driver']} "
-                    f"changed NaN to {laptime:.3f}"
+                logger.info(
+                    "lap_time_filled",
+                    lap=lap["LapNumber"],
+                    driver=lap["Driver"],
+                    laptime=laptime,
                 )
     return laps
