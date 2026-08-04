@@ -23,6 +23,7 @@ dependencies = [
     "bcrypt==4.0.1",
     "seaborn>=0.13.2",
     "pandas-stubs~=2.3.3",
+    "structlog>=26.1.0",
 ]
 
 [dependency-groups]
