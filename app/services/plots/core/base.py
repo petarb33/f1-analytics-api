@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from app.models.image import get_image
 import fastf1
+import matplotlib.pyplot as plt
 
 
 class BaseAnalysis(ABC):
@@ -45,4 +46,6 @@ class BaseAnalysis(ABC):
 
         self.load()
         self.process()
-        return self.plot()
+        result = self.plot()
+        plt.close("all")
+        return result
