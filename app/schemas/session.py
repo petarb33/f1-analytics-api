@@ -1,5 +1,10 @@
 from pydantic import BaseModel, field_validator, ValidationInfo
-from app.services.constants import SEASONS, SESSIONS_MAPPING, RACE_SESSIONS
+from app.services.constants import (
+    SEASONS,
+    SESSIONS_MAPPING,
+    RACE_SESSIONS,
+    QUALIFYING_SESSIONS,
+)
 from app.services.fetch import list_races, list_sessions
 
 
@@ -70,5 +75,16 @@ class RaceSessionParameters(SessionParameters):
             raise ValueError(
                 f"Session '{value}' is not supported here — only Race ('R') "
                 f"and Sprint ('S') sessions are allowed."
+            )
+        return value
+
+
+class QualifyingSessionParameters(SessionParameters):
+    @field_validator("session")
+    @classmethod
+    def validate_qualify_session(cls, value, info: ValidationInfo):
+        if value not in QUALIFYING_SESSIONS:
+            raise ValueError(
+                f"Session '{value}' is not supported here - only Qualifying ('Q')  and Sprint Qualifying ('SQ') sessions are allowed."
             )
         return value
