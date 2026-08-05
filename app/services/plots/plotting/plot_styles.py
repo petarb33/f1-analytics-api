@@ -94,7 +94,7 @@ def move_legend(ax: Axes, fontsize: int = 11):
     )
 
 
-def convert_time(laptime: float) -> str:
+def convert_time(laptime) -> str:
     minute = int(laptime // 60)
     seconds = laptime - minute * 60
     return f"{minute}:{seconds:06.3f}"

@@ -1,13 +1,18 @@
 from fastapi import APIRouter, Depends, Response
-from app.schemas.session import SessionParameters, RaceSessionParameters
+from app.schemas.session import (
+    SessionParameters,
+    RaceSessionParameters,
+    QualifyingSessionParameters,
+)
 from app.schemas.options import GroupOptions, DisplayOptions, BasisOptions
 from app.services.analyze import (
     run_sector_analysis,
     run_strategy,
     run_overtakes,
     run_race_pace,
+    run_gap_to_pole,
+    run_lap_by_lap_pace,
 )
-from app.services.analyze import run_lap_by_lap_pace
 
 router = APIRouter()
 
@@ -55,4 +60,12 @@ def get_strategy_graph(params: RaceSessionParameters = Depends()):
 @router.get("/paceByLaps")
 def get_pace_by_laps_graph(params: RaceSessionParameters = Depends()):
     image_bytes = run_lap_by_lap_pace(params.year, params.round_number, params.session)
+    return Response(content=image_bytes, media_type="image/png")
+
+
+@router.get("/qualiGap")
+def get_quali_gap_graph(params: QualifyingSessionParameters = Depends()):
+    image_bytes = run_gap_to_pole(
+        year=params.year, round_number=params.round_number, session=params.session
+    )
     return Response(content=image_bytes, media_type="image/png")

@@ -3,6 +3,7 @@ from app.services.plots.analyzers.sector_times import DriverSectorTimes, TeamSec
 from app.services.plots.analyzers.strategy import Strategy
 from app.services.plots.analyzers.race_pace import TeamsRacePace, DriversRacePace
 from app.services.plots.analyzers.lap_by_lap_race_pace import LapByLapRacePace
+from app.services.plots.analyzers.gap_to_pole import GapToPole
 
 SECTOR_ANALYZERS = {
     "drivers": DriverSectorTimes,
@@ -48,3 +49,8 @@ def run_strategy(year: int, round_number: int, session: str):
 def run_lap_by_lap_pace(year: int, round_number: int, session: str):
     pace = LapByLapRacePace(year=year, round_number=round_number, session=session)
     return pace.run()
+
+
+def run_gap_to_pole(year: int, round_number: int, session: str):
+    gap_to_pole = GapToPole(year=year, round_number=round_number, session=session)
+    return gap_to_pole.run()
