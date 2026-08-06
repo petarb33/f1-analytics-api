@@ -9,7 +9,7 @@ class Image(Base):
     __tablename__ = "images"
 
     id = Column(Integer, primary_key=True)
-    filename = Column(String, nullable=False)
+    filename = Column(String, unique=True, nullable=False)
     mime_type = Column(String, nullable=False)
     data = Column(LargeBinary, nullable=False)
     created_at = Column(DateTime, default=datetime.now)
