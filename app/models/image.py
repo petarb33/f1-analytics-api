@@ -1,8 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, LargeBinary
-from sqlalchemy.orm import Session
 from datetime import datetime
 from io import BytesIO
-from app.database.db import Base, engine
+from app.database.db import Base, SessionLocal
 import matplotlib.pyplot as plt
 
 
@@ -23,7 +22,7 @@ def save_image(fig: plt.Figure, plot_name: str):
     image_data = buffer.read()
     buffer.close()
 
-    with Session(engine) as session:
+    with SessionLocal() as session:
         img = Image(
             filename=plot_name,
             mime_type="image/png",
@@ -35,7 +34,7 @@ def save_image(fig: plt.Figure, plot_name: str):
 
 
 def get_image(filename: str):
-    with Session(engine) as session:
+    with SessionLocal() as session:
         img = session.query(Image).filter(Image.filename == filename).first()
         if img:
             return {
