@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, DateTime, LargeBinary
+from sqlalchemy.exc import IntegrityError
 from datetime import datetime
 from io import BytesIO
 from app.database.db import Base, SessionLocal
@@ -29,7 +30,12 @@ def save_image(fig: plt.Figure, plot_name: str):
             data=image_data,
         )
         session.add(img)
-        session.commit()
+        try:
+            session.commit()
+        except IntegrityError:
+            session.rollback()
+            existing = get_image(plot_name)
+            return existing["id"], existing["data"]
         return img.id, image_data
 
 
