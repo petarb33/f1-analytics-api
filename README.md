@@ -19,13 +19,15 @@ A REST API for exploring Formula 1 seasons and sessions, and generating cached, 
 
 - Browse seasons, completed races, and completed sessions.
 - Generate styled visualizations from real session data:
-  - **Overtakes** — driver position over the course of a race.
-  - **Sector times** — fastest sector comparison by driver or team, either the theoretical best (fastest time in each sector independently) or taken from a single fastest lap, shown as absolute times or deltas to the fastest.
-  - **Race pace** — lap time distribution (box plot) by driver or team, with in/out and safety-car-affected laps excluded.
-  - **Strategy** — tyre stint timeline per driver, with Safety Car / Virtual Safety Car / Red Flag periods marked per driver (accounting for track position — a leader and a lapped car aren't necessarily on the same lap number when a stoppage starts).
+  - **Overtakes** — driver position over the course of a race (Race/Sprint only).
+  - **Sector times** — fastest sector comparison by driver or team, either the theoretical best (fastest time in each sector independently) or taken from a single fastest lap, shown as absolute times or deltas to the fastest (any completed session).
+  - **Race pace** — lap time distribution (box plot) by driver or team, with in/out and safety-car-affected laps excluded (Race/Sprint only).
+  - **Lap-by-lap race pace** — every driver's lap time plotted lap-by-lap across the race, styled with each driver's official color/linestyle (Race/Sprint only).
+  - **Strategy** — tyre stint timeline per driver, with Safety Car / Virtual Safety Car / Red Flag periods marked per driver (accounting for track position — a leader and a lapped car aren't necessarily on the same lap number when a stoppage starts) (Race/Sprint only).
+  - **Gap to pole** — each driver's best qualifying lap time as a gap to pole position, colored by which qualifying segment (Q1/Q2/Q3) it was set in (Qualifying/Sprint Qualifying only).
 - Register and log in via JWT-based authentication.
 
-Overtakes, race pace, and strategy are only meaningful for full-distance sessions, so those endpoints are restricted to Race and Sprint sessions; sector comparisons remain available for any completed session.
+Each analysis endpoint is restricted to the session types it's actually valid for — overtakes/race pace/strategy require a Race or Sprint session, gap-to-pole requires a Qualifying or Sprint Qualifying session, and sector comparisons remain available for any completed session.
 
 Generated charts are rendered server-side (matplotlib/seaborn, dark themed, using official F1 driver/team/compound colors) and cached in PostgreSQL, keyed by season/round/session/analysis type/options, so repeat requests skip recomputation instead of reloading and reprocessing telemetry every time.
 
@@ -40,6 +42,7 @@ Generated charts are rendered server-side (matplotlib/seaborn, dark themed, usin
 | Auth             | [python-jose](https://github.com/mpdavis/python-jose) (JWT) + [passlib](https://passlib.readthedocs.io/)/bcrypt |
 | Validation       | [Pydantic](https://docs.pydantic.dev/) / pydantic-settings          |
 | Charting         | [matplotlib](https://matplotlib.org/), [seaborn](https://seaborn.pydata.org/)                                                |
+| Logging          | [structlog](https://www.structlog.org/)                             |
 | Dependency mgmt  | [uv](https://docs.astral.sh/uv/)                                    |
 
 ## 3. Project Structure
@@ -54,20 +57,21 @@ app/
 ├── core/
 │   ├── config.py               # Settings (env-driven)
 │   ├── security.py             # password hashing, JWT
-│   └── dependencies.py          # get_db, get_current_user
+│   ├── dependencies.py          # get_db, get_current_user
+│   └── logging.py                # structlog configuration
 ├── database/
 │   └── db.py                   # SQLAlchemy engine/session
 ├── models/
 │   ├── user.py                  # Users table
-│   └── image.py                  # Images table + save/get helpers
+│   └── image.py                  # Images table + save/get helpers (unique filename, race-safe writes)
 ├── schemas/
 │   ├── user.py                    # auth request/response models
-│   ├── session.py                  # season/round/session validation (incl. race-only sessions)
+│   ├── session.py                  # season/round/session validation (Race-only, Qualifying-only variants)
 │   └── options.py                   # chart query options (group, display, basis)
 └── services/
     ├── auth.py                       # user auth logic
     ├── fetch.py                       # FastF1 schedule/session lookups
-    ├── constants.py                    # season range, session mapping, race sessions, track status colors
+    ├── constants.py                    # season range, session mapping, race/qualifying sessions, color constants
     ├── analyze.py                       # analysis orchestration
     └── plots/
         ├── core/
@@ -76,12 +80,15 @@ app/
         │   ├── overtakes.py                # position-by-lap chart
         │   ├── sector_times.py               # fastest sector comparison (driver/team)
         │   ├── race_pace.py                   # lap time distribution box plot (driver/team)
-        │   └── strategy.py                     # tyre stint timeline + SC/VSC/RF markers
+        │   ├── lap_by_lap_race_pace.py          # lap time line chart per driver
+        │   ├── strategy.py                       # tyre stint timeline + SC/VSC/RF markers
+        │   └── gap_to_pole.py                     # qualifying gap-to-pole chart
         ├── processing/
         │   ├── sector_times.py                # sector time data shaping
-        │   ├── race_pace.py                    # lap time filtering/shaping for box plots
+        │   ├── race_pace.py                    # lap time filtering/shaping for box & line plots
         │   ├── strategy.py                      # stint length aggregation
-        │   └── track_status.py                   # per-driver SC/VSC/Red Flag lap detection
+        │   ├── track_status.py                   # per-driver SC/VSC/Red Flag lap detection
+        │   └── gap_to_pole.py                     # qualifying gap-to-pole data shaping
         └── plotting/
             ├── f1_colors.py                     # driver/team/compound color mappings
             └── plot_styles.py                     # shared dark-theme styling helpers
@@ -163,8 +170,14 @@ curl "http://localhost:8000/api/v1/analysis/2024/5/R/sectors?group=drivers&displ
 # Race pace box plot (Race/Sprint only)
 curl "http://localhost:8000/api/v1/analysis/2024/5/R/racepace?group=teams" -o racepace.png
 
+# Lap-by-lap race pace line chart (Race/Sprint only)
+curl http://localhost:8000/api/v1/analysis/2024/5/R/paceByLaps -o pacebylaps.png
+
 # Strategy, with SC/VSC/Red Flag markers (Race/Sprint only)
 curl http://localhost:8000/api/v1/analysis/2024/5/R/strategy -o strategy.png
+
+# Gap to pole (Qualifying/Sprint Qualifying only)
+curl http://localhost:8000/api/v1/analysis/2024/5/Q/qualiGap -o qualigap.png
 ```
 
 ## API Endpoints
@@ -180,6 +193,8 @@ curl http://localhost:8000/api/v1/analysis/2024/5/R/strategy -o strategy.png
 | GET    | `/api/v1/analysis/{year}/{round_number}/{session}/overtakes`            | Driver position/overtakes chart (PNG) — Race/Sprint only        |      |
 | GET    | `/api/v1/analysis/{year}/{round_number}/{session}/sectors?group={drivers\|teams}&display={absolute\|delta}&basis={theoretical\|fastest_lap}` | Sector time comparison chart (PNG) — any completed session |      |
 | GET    | `/api/v1/analysis/{year}/{round_number}/{session}/racepace?group={drivers\|teams}` | Lap time distribution box plot (PNG) — Race/Sprint only |      |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/paceByLaps`           | Lap-by-lap lap time line chart per driver (PNG) — Race/Sprint only |      |
 | GET    | `/api/v1/analysis/{year}/{round_number}/{session}/strategy`             | Tyre strategy chart with SC/VSC/Red Flag markers (PNG) — Race/Sprint only |      |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/qualiGap`             | Gap-to-pole qualifying chart (PNG) — Qualifying/Sprint Qualifying only |      |
 
-> Note: chart generation results are cached in PostgreSQL — the first request for a given season/round/session/analysis/options combination computes and stores the image; subsequent requests for the same combination are served from the cache.
+> Note: chart generation results are cached in PostgreSQL — the first request for a given season/round/session/analysis/options combination computes and stores the image; subsequent requests for the same combination are served from the cache. Concurrent first-time requests for the same combination are handled safely (a unique constraint on the cache key plus race-condition handling means a losing request still gets served the winner's image instead of erroring).
