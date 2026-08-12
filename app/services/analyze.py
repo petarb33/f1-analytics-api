@@ -4,6 +4,7 @@ from app.services.plots.analyzers.strategy import Strategy
 from app.services.plots.analyzers.race_pace import TeamsRacePace, DriversRacePace
 from app.services.plots.analyzers.lap_by_lap_race_pace import LapByLapRacePace
 from app.services.plots.analyzers.gap_to_pole import GapToPole
+from app.services.plots.analyzers.lap_time_heatmap import LapTimeHeatmap
 
 SECTOR_ANALYZERS = {
     "drivers": DriverSectorTimes,
@@ -54,3 +55,20 @@ def run_lap_by_lap_pace(year: int, round_number: int, session: str):
 def run_gap_to_pole(year: int, round_number: int, session: str):
     gap_to_pole = GapToPole(year=year, round_number=round_number, session=session)
     return gap_to_pole.run()
+
+
+def run_laptime_heatmap(
+    year: int,
+    round_number: int,
+    session: str,
+    drivers: list[str] | None = None,
+    mode="race",
+):
+    laptime_heatmap = LapTimeHeatmap(
+        year=year,
+        round_number=round_number,
+        session=session,
+        drivers=drivers,
+        mode=mode,
+    )
+    return laptime_heatmap.run()

@@ -1,10 +1,16 @@
-from fastapi import APIRouter, Depends, Response
+from fastapi import APIRouter, Depends, Response, Query, HTTPException
+from typing import Annotated
 from app.schemas.session import (
     SessionParameters,
     RaceSessionParameters,
     QualifyingSessionParameters,
 )
-from app.schemas.options import GroupOptions, DisplayOptions, BasisOptions
+from app.schemas.options import (
+    GroupOptions,
+    DisplayOptions,
+    BasisOptions,
+    LapModeOptions,
+)
 from app.services.analyze import (
     run_sector_analysis,
     run_strategy,
@@ -12,6 +18,7 @@ from app.services.analyze import (
     run_race_pace,
     run_gap_to_pole,
     run_lap_by_lap_pace,
+    run_laptime_heatmap,
 )
 
 router = APIRouter()
@@ -68,4 +75,19 @@ def get_quali_gap_graph(params: QualifyingSessionParameters = Depends()):
     image_bytes = run_gap_to_pole(
         year=params.year, round_number=params.round_number, session=params.session
     )
+    return Response(content=image_bytes, media_type="image/png")
+
+
+@router.get("/heatmap")
+def get_laptime_heatmap_graph(
+    params: RaceSessionParameters = Depends(),
+    drivers: Annotated[list[str] | None, Query()] = None,
+    mode_options: LapModeOptions = Depends(),
+):
+    try:
+        image_bytes = run_laptime_heatmap(
+            params.year, params.round_number, params.session, drivers, mode_options.mode
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=404, detail=str(e))
     return Response(content=image_bytes, media_type="image/png")

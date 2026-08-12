@@ -12,3 +12,7 @@ class DisplayOptions(BaseModel):
 
 class BasisOptions(BaseModel):
     basis: Literal["theoretical", "fastest_lap"] = "theoretical"
+
+
+class LapModeOptions(BaseModel):
+    mode: Literal["all", "race"] = "race"
