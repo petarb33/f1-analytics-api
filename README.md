@@ -28,6 +28,9 @@ A REST API for exploring Formula 1 seasons and sessions, and generating cached, 
   - **Lap time consistency heatmap** — every driver's lap time across the race as a driver × lap heatmap, optionally scoped to specific drivers and to either all laps (including pit/SC/VSC laps) or race laps only (Race/Sprint only).
 - Register and log in via JWT-based authentication.
 
+All analysis (chart) endpoints require a logged-in user (a valid JWT bearer
+token); season/schedule browsing endpoints remain open.
+
 Each analysis endpoint is restricted to the session types it's actually valid for — overtakes/race pace/strategy/heatmap require a Race or Sprint session, gap-to-pole requires a Qualifying or Sprint Qualifying session, and sector comparisons remain available for any completed session. Requests with an invalid year, round, session, or option value return a `422` with a clear, structured error message rather than a generic failure.
 
 Generated charts are rendered server-side (matplotlib/seaborn, dark themed, using official F1 driver/team/compound colors) and cached in PostgreSQL, keyed by season/round/session/analysis type/options, so repeat requests skip recomputation instead of reloading and reprocessing telemetry every time.
@@ -162,29 +165,31 @@ curl http://localhost:8000/api/v1/season/2024/5/sessions
 
 ### Generating a chart
 
-Chart endpoints return raw `image/png` bytes (not JSON) — point a browser or `<img>` tag directly at the URL, or save the response to a file:
+Chart endpoints return raw `image/png` bytes (not JSON) — point a browser or `<img>` tag directly at the URL, or save the response to a file. They require a valid JWT bearer token (see [Authentication flow](#authentication-flow) above):
 
 ```bash
+AUTH="Authorization: Bearer <access_token>"
+
 # Overtakes (Race/Sprint only)
-curl http://localhost:8000/api/v1/analysis/2024/5/R/overtakes -o overtakes.png
+curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/R/overtakes -o overtakes.png
 
 # Sector times — any completed session, with options
-curl "http://localhost:8000/api/v1/analysis/2024/5/R/sectors?group=drivers&display=delta&basis=fastest_lap" -o sectors.png
+curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/sectors?group=drivers&display=delta&basis=fastest_lap" -o sectors.png
 
 # Race pace box plot (Race/Sprint only)
-curl "http://localhost:8000/api/v1/analysis/2024/5/R/racepace?group=teams" -o racepace.png
+curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/racepace?group=teams" -o racepace.png
 
 # Lap-by-lap race pace line chart (Race/Sprint only)
-curl http://localhost:8000/api/v1/analysis/2024/5/R/paceByLaps -o pacebylaps.png
+curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/R/paceByLaps -o pacebylaps.png
 
 # Strategy, with SC/VSC/Red Flag markers (Race/Sprint only)
-curl http://localhost:8000/api/v1/analysis/2024/5/R/strategy -o strategy.png
+curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/R/strategy -o strategy.png
 
 # Gap to pole (Qualifying/Sprint Qualifying only)
-curl http://localhost:8000/api/v1/analysis/2024/5/Q/qualiGap -o qualigap.png
+curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/Q/qualiGap -o qualigap.png
 
 # Lap time consistency heatmap, all laps, specific drivers (Race/Sprint only)
-curl "http://localhost:8000/api/v1/analysis/2024/5/R/heatmap?mode=all&drivers=VER&drivers=NOR&drivers=LEC" -o heatmap.png
+curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/heatmap?mode=all&drivers=VER&drivers=NOR&drivers=LEC" -o heatmap.png
 ```
 
 ### Error responses
@@ -214,12 +219,12 @@ Invalid input (a nonexistent year/round/session, or a session type an endpoint d
 | GET    | `/api/v1/season`                                                     | List available seasons                                |      |
 | GET    | `/api/v1/season/{year}/races`                                         | List completed races for a season                       |      |
 | GET    | `/api/v1/season/{year}/{round_number}/sessions`                        | List completed sessions for a race round                  |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/overtakes`            | Driver position/overtakes chart (PNG) — Race/Sprint only        |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/sectors?group={drivers\|teams}&display={absolute\|delta}&basis={theoretical\|fastest_lap}` | Sector time comparison chart (PNG) — any completed session |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/racepace?group={drivers\|teams}` | Lap time distribution box plot (PNG) — Race/Sprint only |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/paceByLaps`           | Lap-by-lap lap time line chart per driver (PNG) — Race/Sprint only |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/strategy`             | Tyre strategy chart with SC/VSC/Red Flag markers (PNG) — Race/Sprint only |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/qualiGap`             | Gap-to-pole qualifying chart (PNG) — Qualifying/Sprint Qualifying only |      |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/heatmap?drivers={code}&drivers={code}&mode={all\|race}` | Lap time consistency heatmap (PNG) — Race/Sprint only |      |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/overtakes`            | Driver position/overtakes chart (PNG) — Race/Sprint only        |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/sectors?group={drivers\|teams}&display={absolute\|delta}&basis={theoretical\|fastest_lap}` | Sector time comparison chart (PNG) — any completed session |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/racepace?group={drivers\|teams}` | Lap time distribution box plot (PNG) — Race/Sprint only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/paceByLaps`           | Lap-by-lap lap time line chart per driver (PNG) — Race/Sprint only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/strategy`             | Tyre strategy chart with SC/VSC/Red Flag markers (PNG) — Race/Sprint only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/qualiGap`             | Gap-to-pole qualifying chart (PNG) — Qualifying/Sprint Qualifying only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/heatmap?drivers={code}&drivers={code}&mode={all\|race}` | Lap time consistency heatmap (PNG) — Race/Sprint only |  ✅  |
 
 > Note: chart generation results are cached in PostgreSQL — the first request for a given season/round/session/analysis/options combination computes and stores the image; subsequent requests for the same combination are served from the cache. Concurrent first-time requests for the same combination are handled safely (a unique constraint on the cache key plus race-condition handling means a losing request still gets served the winner's image instead of erroring).
