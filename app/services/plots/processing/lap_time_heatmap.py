@@ -42,10 +42,3 @@ def order_by_finishing_position(data: Session, drivers: list[str]) -> list[str]:
         return float("inf") if pd.isna(pos) else pos
 
     return sorted(drivers, key=position_key)
-
-
-def validate_drivers(data: Session, drivers: list[str]) -> None:
-    valid_drivers = set(data.results["Abbreviation"])
-    unknown = set(drivers) - valid_drivers
-    if unknown:
-        raise ValueError(f"Driver(s) not in this session: {', '.join(sorted(unknown))}")

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Response, Query, HTTPException
+from fastapi import APIRouter, Depends, Response, Query
 from typing import Annotated
 from app.schemas.session import (
     SessionParameters,
@@ -84,10 +84,7 @@ def get_laptime_heatmap_graph(
     drivers: Annotated[list[str] | None, Query()] = None,
     mode_options: LapModeOptions = Depends(),
 ):
-    try:
-        image_bytes = run_laptime_heatmap(
-            params.year, params.round_number, params.session, drivers, mode_options.mode
-        )
-    except ValueError as e:
-        raise HTTPException(status_code=404, detail=str(e))
+    image_bytes = run_laptime_heatmap(
+        params.year, params.round_number, params.session, drivers, mode_options.mode
+    )
     return Response(content=image_bytes, media_type="image/png")

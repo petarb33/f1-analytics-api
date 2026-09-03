@@ -17,8 +17,8 @@ from app.services.plots.plotting.plot_styles import (
 from app.services.plots.processing.lap_time_heatmap import (
     get_lap_time_consistency,
     order_by_finishing_position,
-    validate_drivers,
 )
+from app.services.plots.processing.validation import validate_drivers
 
 
 class LapTimeHeatmap(BaseAnalysis):

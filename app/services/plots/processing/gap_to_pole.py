@@ -1,5 +1,6 @@
 import pandas as pd
 from fastf1.core import Session
+from app.core.exceptions import AnalysisDataError
 
 
 def get_qualifying_gaps(data: Session, drivers: list[str]) -> pd.DataFrame:
@@ -20,6 +21,11 @@ def get_qualifying_gaps(data: Session, drivers: list[str]) -> pd.DataFrame:
                     }
                 )
                 break
+
+    if not quali_data:
+        raise AnalysisDataError(
+            "No qualifying lap times recorded for the requested drivers/session."
+        )
 
     df = pd.DataFrame(quali_data)
     df["GapToPole"] = (df["LapTime"] - df["LapTime"].min()).round(3)
