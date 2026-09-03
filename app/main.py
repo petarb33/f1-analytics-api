@@ -3,6 +3,9 @@ from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
 from pydantic import ValidationError
 from app.api.routes import api_router
+from app.core.logging import configure_logging
+
+configure_logging()
 
 app = FastAPI()
 
