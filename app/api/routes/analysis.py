@@ -48,7 +48,7 @@ def get_sectors_graph(
     return Response(content=image_bytes, media_type="image/png")
 
 
-@router.get("/racepace")
+@router.get("/race-pace")
 def get_race_pace_graph(
     params: RaceSessionParameters = Depends(), group_options: GroupOptions = Depends()
 ):
@@ -64,13 +64,13 @@ def get_strategy_graph(params: RaceSessionParameters = Depends()):
     return Response(content=image_bytes, media_type="image/png")
 
 
-@router.get("/paceByLaps")
+@router.get("/pace-by-laps")
 def get_pace_by_laps_graph(params: RaceSessionParameters = Depends()):
     image_bytes = run_lap_by_lap_pace(params.year, params.round_number, params.session)
     return Response(content=image_bytes, media_type="image/png")
 
 
-@router.get("/qualiGap")
+@router.get("/quali-gap")
 def get_quali_gap_graph(params: QualifyingSessionParameters = Depends()):
     image_bytes = run_gap_to_pole(
         year=params.year, round_number=params.round_number, session=params.session
