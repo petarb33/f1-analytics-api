@@ -19,6 +19,7 @@ from app.services.analyze import (
     run_gap_to_pole,
     run_lap_by_lap_pace,
     run_laptime_heatmap,
+    run_telemetry_comparison,
 )
 
 router = APIRouter()
@@ -86,5 +87,16 @@ def get_laptime_heatmap_graph(
 ):
     image_bytes = run_laptime_heatmap(
         params.year, params.round_number, params.session, drivers, mode_options.mode
+    )
+    return Response(content=image_bytes, media_type="image/png")
+
+
+@router.get("/telemetry")
+def get_telemetry_comparison_graph(
+    params: SessionParameters = Depends(),
+    picks: Annotated[list[str], Query(min_length=1)] = ...,
+):
+    image_bytes = run_telemetry_comparison(
+        params.year, params.round_number, params.session, picks
     )
     return Response(content=image_bytes, media_type="image/png")

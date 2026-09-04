@@ -5,6 +5,7 @@ from app.services.plots.analyzers.race_pace import TeamsRacePace, DriversRacePac
 from app.services.plots.analyzers.lap_by_lap_race_pace import LapByLapRacePace
 from app.services.plots.analyzers.gap_to_pole import GapToPole
 from app.services.plots.analyzers.lap_time_heatmap import LapTimeHeatmap
+from app.services.plots.analyzers.telemetry_comparison import TelemetryComparison
 
 SECTOR_ANALYZERS = {
     "drivers": DriverSectorTimes,
@@ -72,3 +73,12 @@ def run_laptime_heatmap(
         mode=mode,
     )
     return laptime_heatmap.run()
+
+
+def run_telemetry_comparison(
+    year: int, round_number: int, session: str, picks: list[str]
+):
+    comparison = TelemetryComparison(
+        year=year, round_number=round_number, session=session, picks=picks
+    )
+    return comparison.run()
