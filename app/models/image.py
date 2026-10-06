@@ -50,3 +50,29 @@ def get_image(filename: str):
                 "data": img.data,
             }
         return None
+
+
+def get_image_by_id(image_id: int):
+    with SessionLocal() as session:
+        img = session.query(Image).filter(Image.id == image_id).first()
+        if img:
+            return {
+                "id": img.id,
+                "filename": img.filename,
+                "mime_type": img.mime_type,
+                "data": img.data,
+            }
+        return None
+
+
+def get_latest_image():
+    with SessionLocal() as session:
+        img = session.query(Image).order_by(Image.id.desc()).first()
+        if img:
+            return {
+                "id": img.id,
+                "filename": img.filename,
+                "mime_type": img.mime_type,
+                "data": img.data,
+            }
+        return None

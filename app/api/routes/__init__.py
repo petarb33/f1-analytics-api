@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.api.routes import season, auth, analysis
+from app.api.routes import season, auth, analysis, images
 from app.core.dependencies import get_current_user
 
 api_router = APIRouter()
@@ -11,3 +11,4 @@ api_router.include_router(
     tags=["analysis"],
     dependencies=[Depends(get_current_user)],
 )
+api_router.include_router(images.router, prefix="/images", tags=["images"])
