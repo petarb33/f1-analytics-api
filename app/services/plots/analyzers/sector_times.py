@@ -115,6 +115,9 @@ class SectorTimes(BaseAnalysis):
             if self.basis == "fastest_lap"
             else "Fastest Sectors Comparison"
         )
+        if self.display == "delta":
+            title += " - Delta Times"
+
         add_figure_title(fig, self.event_info, title, 0.95)
         _, image_bytes = save_image(fig, self.cache_key)
         return image_bytes
