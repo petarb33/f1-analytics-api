@@ -1,7 +1,6 @@
 from abc import abstractmethod
 
 from matplotlib import pyplot as plt
-import seaborn as sns
 
 from app.services.plots.core.base import BaseAnalysis
 from app.services.fetch import get_drivers, get_teams
@@ -87,22 +86,18 @@ class SectorTimes(BaseAnalysis):
         for ax, (sector, group) in zip(
             axs, self.sector_times.groupby("sector", sort=False)
         ):
-            sns.barplot(
-                data=group,
-                x="entity",
-                y="time",
-                hue="entity",
-                legend=False,
-                palette=self.colors,
-                ax=ax,
+            group = group.sort_values("time")
+            bars = ax.bar(
+                group["entity"],
+                group["time"],
+                color=[self.colors.get(e, "grey") for e in group["entity"]],
+                edgecolor=[compound_colors.get(t, "white") for t in group["tyre"]],
+                linewidth=1,
             )
 
-            for container in ax.containers:
-                ax.bar_label(container, fontsize=7, color="white")
-
-            for bar, tyre in zip(ax.patches, group["tyre"]):
-                bar.set_edgecolor(compound_colors.get(tyre, "white"))
-                bar.set_linewidth(1)
+            fmt = "+%.3f" if self.display == "delta" else "%.3f"
+            ax.bar_label(bars, fmt=fmt, fontsize=7, color="white")
+            ax.set_xlim(-0.5, len(group) - 0.5)
 
             set_ylim(group, ax, "time")
             add_ax_title(ax, title=sector)
