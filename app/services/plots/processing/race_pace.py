@@ -15,12 +15,10 @@ def get_race_pace_boxplot(
     """Prepare representative race laps for a race pace boxplot.
 
     Starts from laps without pit entry or exit, then excludes lap 1,
-    drivers with an excluded classification (withdrawn, not classified,
-    failed to qualify, excluded, disqualified), Safety Car, VSC and
-    red-flag laps, and laps slower than 107% of the fastest remaining
-    lap. Missing lap times are reconstructed from sector times when all
-    three sectors are available. Groups with fewer than ``MIN_LAPS``
-    laps are dropped so every group can be drawn as a box.
+    Safety Car, VSC and red-flag laps, and laps slower than 107% of the
+    fastest remaining lap. Missing lap times are reconstructed from
+    sector times when all three sectors are available. Groups with
+    fewer than ``MIN_LAPS`` laps are dropped so every group can be drawn as a box.
 
     Args:
         data: A loaded FastF1 race session.
