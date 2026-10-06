@@ -85,12 +85,16 @@ def _iter_axes(axs: Axes | list[Axes] | np.ndarray) -> Iterable[Axes]:
     return np.atleast_1d(axs).ravel()
 
 
-def move_legend(ax: Axes, fontsize: int = 11):
+def move_legend(
+    ax: Axes, fontsize: int = 11, labelcolor: str = "white", facecolor: str = "#1e1c1b"
+) -> None:
     ax.legend(
         bbox_to_anchor=(1.025, 1),
         loc="upper left",
         borderaxespad=0,
         fontsize=fontsize,
+        labelcolor=labelcolor,
+        facecolor=facecolor,
     )
 
 
