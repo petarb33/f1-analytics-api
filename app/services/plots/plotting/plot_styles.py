@@ -33,12 +33,15 @@ def color_ticks(ax: Axes, color="white") -> None:
 
 
 def set_ylim(
-    df: pd.DataFrame, ax: Axes, stat: str, margin_percentage: float = 0.2
+    df: pd.DataFrame, ax: Axes, stat: str = "delta", margin_percentage: float = 0.2
 ) -> None:
     min_value = df[stat].min()
     max_value = df[stat].max()
     margin = (max_value - min_value) * margin_percentage
-    ax.set_ylim(min_value - margin, max_value + margin)
+    if min_value != 0:
+        ax.set_ylim(min_value - margin, max_value + margin)
+    else:
+        ax.set_ylim(min_value, max_value + margin)
 
 
 def color_fig(fig: Figure) -> None:
