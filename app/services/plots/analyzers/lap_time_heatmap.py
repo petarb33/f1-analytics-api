@@ -24,18 +24,18 @@ from app.services.plots.processing.validation import validate_drivers
 class LapTimeHeatmap(BaseAnalysis):
     def __init__(self, year, round_number, session, drivers=None, mode="race"):
         super().__init__(year, round_number, session)
+        self.requested_drivers = drivers
         self.drivers_to_analyze = drivers
         self.mode = mode
 
     def load(self):
         super().load()
-        if self.drivers_to_analyze:
-            validate_drivers(self.data, self.drivers_to_analyze)
+        if self.requested_drivers:
+            validate_drivers(self.data, self.requested_drivers)
+            drivers = self.requested_drivers
         else:
-            self.drivers_to_analyze = get_drivers(self.data)
-        self.drivers_to_analyze = order_by_finishing_position(
-            self.data, self.drivers_to_analyze
-        )
+            drivers = get_drivers(self.data)
+        self.drivers_to_analyze = order_by_finishing_position(self.data, drivers)
 
     def process(self):
         self._lap_time_matrix = get_lap_time_consistency(
@@ -45,8 +45,8 @@ class LapTimeHeatmap(BaseAnalysis):
     @property
     def cache_key(self) -> str:
         drivers_key = (
-            "_".join(sorted(self.drivers_to_analyze))
-            if self.drivers_to_analyze
+            "_".join(sorted(self.requested_drivers))
+            if self.requested_drivers
             else "all"
         )
         return f"{super().cache_key}_{self.mode}_{drivers_key}"
