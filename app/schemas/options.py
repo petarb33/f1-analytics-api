@@ -15,4 +15,4 @@ class BasisOptions(BaseModel):
 
 
 class LapModeOptions(BaseModel):
-    mode: Literal["all", "race"] = "race"
+    mode: Literal["all", "race", "quick"] = "race"
