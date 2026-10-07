@@ -25,13 +25,14 @@ A REST API for exploring Formula 1 seasons and sessions, and generating cached, 
   - **Lap-by-lap race pace** — every driver's lap time plotted lap-by-lap across the race, styled with each driver's official color/linestyle (Race/Sprint only).
   - **Strategy** — tyre stint timeline per driver, with Safety Car / Virtual Safety Car / Red Flag periods marked per driver (accounting for track position — a leader and a lapped car aren't necessarily on the same lap number when a stoppage starts) (Race/Sprint only).
   - **Gap to pole** — each driver's best qualifying lap time as a gap to pole position, colored by which qualifying segment (Q1/Q2/Q3) it was set in (Qualifying/Sprint Qualifying only).
-  - **Lap time consistency heatmap** — every driver's lap time across the race as a driver × lap heatmap, optionally scoped to specific drivers and to either all laps (including pit/SC/VSC laps) or race laps only (Race/Sprint only).
+  - **Lap time consistency heatmap** — every driver's lap time across the race as a driver × lap heatmap, with drivers ordered by finishing position. Optionally scoped to specific drivers and to one of three lap modes: `race` (representative laps only — no pit in/out laps or SC/VSC/Red Flag laps), `quick` (laps within 107% of each driver's own fastest lap), or `all` (including pit/SC/VSC laps). The opening lap is always left out (Race/Sprint only).
+  - **Telemetry comparison** — speed, throttle, brake and gear traces over lap distance for one or more picked laps, each given as `DRIVER:lapnumber`, `DRIVER:fastest` or `DRIVER:grid` (the lap that set the driver's qualifying time — Qualifying/Sprint Qualifying only). When exactly two laps are picked, a time-delta panel of the slower lap against the faster one is added. Several laps of the same driver can be compared; they're told apart by linestyle (any completed session).
 - Register and log in via JWT-based authentication.
 
 All analysis (chart) endpoints require a logged-in user (a valid JWT bearer
 token); season/schedule browsing endpoints remain open.
 
-Each analysis endpoint is restricted to the session types it's actually valid for — overtakes/race pace/strategy/heatmap require a Race or Sprint session, gap-to-pole requires a Qualifying or Sprint Qualifying session, and sector comparisons remain available for any completed session. Requests with an invalid year, round, session, or option value return a `422` with a clear, structured error message rather than a generic failure.
+Each analysis endpoint is restricted to the session types it's actually valid for — overtakes/race pace/strategy/heatmap require a Race or Sprint session, gap-to-pole requires a Qualifying or Sprint Qualifying session, and sector and telemetry comparisons remain available for any completed session. Requests with an invalid year, round, session, or option value return a `422` with a clear, structured error message rather than a generic failure, and valid requests the session has no usable data for (an unknown driver code, a lap that doesn't exist, no qualifying times recorded) return a `404` with a message saying what is missing.
 
 Generated charts are rendered server-side (matplotlib/seaborn, dark themed, using official F1 driver/team/compound colors) and cached in PostgreSQL, keyed by season/round/session/analysis type/options, so repeat requests skip recomputation instead of reloading and reprocessing telemetry every time.
 
@@ -57,22 +58,24 @@ app/
 │   └── routes/
 │       ├── auth.py            # register / login / me
 │       ├── season.py          # seasons, races, sessions
-│       └── analysis.py        # chart-generating endpoints
+│       ├── analysis.py        # chart-generating endpoints
+│       └── images.py          # fetch cached charts by id / latest (testing aid)
 ├── core/
 │   ├── config.py               # Settings (env-driven)
 │   ├── security.py             # password hashing, JWT
 │   ├── dependencies.py          # get_db, get_current_user
+│   ├── exceptions.py             # AnalysisDataError (no usable session data -> 404)
 │   └── logging.py                # structlog configuration
 ├── database/
 │   └── db.py                   # SQLAlchemy engine/session
 ├── models/
 │   ├── user.py                  # Users table
-│   └── image.py                  # Images table + save/get helpers (unique filename, race-safe writes)
+│   └── image.py                  # Images table + save/get helpers (unique filename, race-safe writes, by-id/latest lookups)
 ├── schemas/
 │   ├── user.py                    # auth request/response models
 │   ├── session.py                  # season/round/session validation (Race-only, Qualifying-only variants)
 │   └── options.py                   # chart query options (group, display, basis, lap mode)
-├── main.py                            # app setup + global validation error handler
+├── main.py                            # app setup + global exception handlers (422 / 404 / 500)
 └── services/
     ├── auth.py                       # user auth logic
     ├── fetch.py                       # FastF1 schedule/session lookups
@@ -88,14 +91,18 @@ app/
         │   ├── lap_by_lap_race_pace.py          # lap time line chart per driver
         │   ├── strategy.py                       # tyre stint timeline + SC/VSC/RF markers
         │   ├── gap_to_pole.py                     # qualifying gap-to-pole chart
-        │   └── lap_time_heatmap.py                 # driver x lap consistency heatmap
+        │   ├── lap_time_heatmap.py                 # driver x lap consistency heatmap
+        │   └── telemetry_comparison.py              # multi-lap telemetry traces + time delta
         ├── processing/
         │   ├── sector_times.py                # sector time data shaping
         │   ├── race_pace.py                    # lap time filtering/shaping for box & line plots
+        │   ├── laps.py                          # shared lap selection (quick laps within 107%)
         │   ├── strategy.py                      # stint length aggregation
         │   ├── track_status.py                   # per-driver SC/VSC/Red Flag lap detection
         │   ├── gap_to_pole.py                     # qualifying gap-to-pole data shaping
-        │   └── lap_time_heatmap.py                 # heatmap matrix building, driver validation/ordering
+        │   ├── lap_time_heatmap.py                 # heatmap matrix building, driver ordering
+        │   ├── telemetry_comparison.py              # lap pick parsing/resolution, time delta
+        │   └── validation.py                         # shared driver validation
         └── plotting/
             ├── f1_colors.py                     # driver/team/compound color mappings
             └── plot_styles.py                     # shared dark-theme styling helpers
@@ -177,19 +184,40 @@ curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/R/overtakes -o over
 curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/sectors?group=drivers&display=delta&basis=fastest_lap" -o sectors.png
 
 # Race pace box plot (Race/Sprint only)
-curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/racepace?group=teams" -o racepace.png
+curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/race-pace?group=teams" -o racepace.png
 
 # Lap-by-lap race pace line chart (Race/Sprint only)
-curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/R/paceByLaps -o pacebylaps.png
+curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/R/pace-by-laps -o pacebylaps.png
 
 # Strategy, with SC/VSC/Red Flag markers (Race/Sprint only)
 curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/R/strategy -o strategy.png
 
 # Gap to pole (Qualifying/Sprint Qualifying only)
-curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/Q/qualiGap -o qualigap.png
+curl -H "$AUTH" http://localhost:8000/api/v1/analysis/2024/5/Q/quali-gap -o qualigap.png
 
 # Lap time consistency heatmap, all laps, specific drivers (Race/Sprint only)
 curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/heatmap?mode=all&drivers=VER&drivers=NOR&drivers=LEC" -o heatmap.png
+
+# Lap time consistency heatmap, quick laps only (within 107% of each driver's fastest)
+curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/heatmap?mode=quick" -o heatmap_quick.png
+
+# Telemetry comparison — two grid laps in qualifying (adds a time-delta panel)
+curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/Q/telemetry?picks=VER:grid&picks=NOR:grid" -o telemetry.png
+
+# Telemetry comparison — a driver's fastest lap against a specific lap number in the race
+curl -H "$AUTH" "http://localhost:8000/api/v1/analysis/2024/5/R/telemetry?picks=VER:fastest&picks=VER:30" -o telemetry_race.png
+```
+
+### Fetching cached charts
+
+A small helper router, added for testing, serves images straight from the cache table without regenerating them. These endpoints are not behind authentication:
+
+```bash
+# Most recently generated chart
+curl http://localhost:8000/api/v1/images -o latest.png
+
+# A specific cached chart by its database id
+curl http://localhost:8000/api/v1/images/12 -o chart.png
 ```
 
 ### Error responses
@@ -209,6 +237,18 @@ Invalid input (a nonexistent year/round/session, or a session type an endpoint d
 }
 ```
 
+A request that is well-formed but that the session has no usable data for returns a `404` with a plain message:
+
+```json
+{ "detail": "Driver(s) not in this session: XYZ" }
+```
+
+Anything unexpected is logged (with traceback) and returned as a generic `500`:
+
+```json
+{ "detail": "Internal server error" }
+```
+
 ## API Endpoints
 
 | Method | Endpoint                                                       | Description                                     | Auth |
@@ -221,10 +261,13 @@ Invalid input (a nonexistent year/round/session, or a session type an endpoint d
 | GET    | `/api/v1/season/{year}/{round_number}/sessions`                        | List completed sessions for a race round                  |      |
 | GET    | `/api/v1/analysis/{year}/{round_number}/{session}/overtakes`            | Driver position/overtakes chart (PNG) — Race/Sprint only        |  ✅  |
 | GET    | `/api/v1/analysis/{year}/{round_number}/{session}/sectors?group={drivers\|teams}&display={absolute\|delta}&basis={theoretical\|fastest_lap}` | Sector time comparison chart (PNG) — any completed session |  ✅  |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/racepace?group={drivers\|teams}` | Lap time distribution box plot (PNG) — Race/Sprint only |  ✅  |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/paceByLaps`           | Lap-by-lap lap time line chart per driver (PNG) — Race/Sprint only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/race-pace?group={drivers\|teams}` | Lap time distribution box plot (PNG) — Race/Sprint only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/pace-by-laps`         | Lap-by-lap lap time line chart per driver (PNG) — Race/Sprint only |  ✅  |
 | GET    | `/api/v1/analysis/{year}/{round_number}/{session}/strategy`             | Tyre strategy chart with SC/VSC/Red Flag markers (PNG) — Race/Sprint only |  ✅  |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/qualiGap`             | Gap-to-pole qualifying chart (PNG) — Qualifying/Sprint Qualifying only |  ✅  |
-| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/heatmap?drivers={code}&drivers={code}&mode={all\|race}` | Lap time consistency heatmap (PNG) — Race/Sprint only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/quali-gap`            | Gap-to-pole qualifying chart (PNG) — Qualifying/Sprint Qualifying only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/heatmap?drivers={code}&drivers={code}&mode={all\|race\|quick}` | Lap time consistency heatmap (PNG) — Race/Sprint only |  ✅  |
+| GET    | `/api/v1/analysis/{year}/{round_number}/{session}/telemetry?picks={DRIVER:lap}&picks={DRIVER:lap}` | Telemetry comparison chart (PNG), `lap` being a lap number, `fastest` or `grid`; at least one pick required — any completed session |  ✅  |
+| GET    | `/api/v1/images`                                                        | Most recently cached chart (testing aid)                |      |
+| GET    | `/api/v1/images/{image_id}`                                             | Cached chart by database id (testing aid)               |      |
 
 > Note: chart generation results are cached in PostgreSQL — the first request for a given season/round/session/analysis/options combination computes and stores the image; subsequent requests for the same combination are served from the cache. Concurrent first-time requests for the same combination are handled safely (a unique constraint on the cache key plus race-condition handling means a losing request still gets served the winner's image instead of erroring).
