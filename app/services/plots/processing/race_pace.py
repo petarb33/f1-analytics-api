@@ -62,6 +62,22 @@ def get_race_pace_boxplot(
 
 
 def fill_missing_laps(laps: pd.DataFrame) -> pd.DataFrame:
+    """Reconstruct missing lap times from sector times.
+
+    For every lap without a ``LapTime`` whose three sector times are all
+    available, the sum of the sectors is written to ``"LapTime (s)"``.
+    Laps missing any sector time are left unchanged. Each filled lap is
+    logged.
+
+    Args:
+        laps: Laps with ``LapTime``, ``Sector1Time``, ``Sector2Time``,
+            ``Sector3Time``, ``LapNumber`` and ``Driver`` columns.
+            Modified in place.
+
+    Returns:
+        The same ``laps`` frame, with ``"LapTime (s)"`` filled in seconds
+        where a lap time could be reconstructed.
+    """
     for index, lap in laps.iterrows():
         if pd.isna(lap["LapTime"]):
             s1, s2, s3 = lap["Sector1Time"], lap["Sector2Time"], lap["Sector3Time"]
